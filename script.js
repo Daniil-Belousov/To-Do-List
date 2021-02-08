@@ -6,18 +6,36 @@ let inputR = '';
 let red = null;
 
 
-window.onload = function init () {
+window.onload = async function init () {
     input = document.getElementById('input-text');
     input.addEventListener('change', updateValue); 
+    const resp = await fetch('http://localhost:8000/allTasks', {
+        method: 'GET'
+    });
+    let result = await resp.json();
+    allTasks = result.data;
     render();
 }
 
 
-onClickButton = () => {
+onClickButton = async () => {
     allTasks.push({
         text: valueInput,
         isCheck: false
     });
+    const resp = await fetch('http://localhost:8000/createTask', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+            text: valueInput,
+            isCheck: false
+        })
+    });
+    let result = await resp.json();
+    allTasks = result.data; 
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     valueInput= '';
     input.value = '';
@@ -27,8 +45,6 @@ onClickButton = () => {
 updateValue = (event) => {
     valueInput = event.target.value;
 }
-
-
 
 render = () => {
     const content = document.getElementById('tasks-container');
@@ -56,10 +72,7 @@ render = () => {
         container.appendChild(inputR);
 
         inputR.onblur = () => {
-            allTasks[indexEdit].text = valueInput;
-            indexEdit = null;
-            localStorage.setItem('tasks', JSON.stringify(allTasks));
-            render();
+            onDoneText();
         }
      } else {
         const text = document.createElement('p');
@@ -73,7 +86,8 @@ render = () => {
         imageDone.src = 'images/check-mark.svg';
         imageDone.className = 'img-btn done-btn';
         imageDone.onclick = function () {
-            onDoneText(index, container);
+            onDoneText();
+            console.log(item)
         }
         container.appendChild(imageDone);
     } else {
@@ -82,7 +96,7 @@ render = () => {
         imageEdit.id = `img-${index}`;
         imageEdit.className = 'img-btn edit-btn';
         imageEdit.onclick = function () {
-            onEditText(index, container);
+            onEditText(index);
         }
         container.appendChild(imageEdit);
     }
@@ -94,7 +108,7 @@ render = () => {
      imageDel.className = 'img-btn del-btn';
      container.appendChild(imageDel);
      imageDel.onclick = function () {
-        onClickDel(index);
+        onClickDel(index, item);
      }
 
      content.appendChild(container);  
@@ -107,8 +121,13 @@ onChangeCheckbox = (index) => {
     render();
 }
 
-onClickDel = (index) => {
+onClickDel = async (index, item) => {
     allTasks.splice(index,1);
+    const resp = await fetch(`http://localhost:8000/deleteTask?id=${item.id}` , {
+        method: 'DELETE',
+    });
+    let result = await resp.json();
+    allTasks = result.data; 
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
 }
@@ -116,21 +135,31 @@ onClickDel = (index) => {
 onEditText = (index) => {
     indexEdit = index;
     valueInput = allTasks[index].text;
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
     inputR.focus();
 }
 
-onDoneText = (index) => {
+onDoneText = async (item) => {
     allTasks[indexEdit].text = valueInput;
-    indexEdit = null;
+    const resp = await fetch('http://localhost:8000/updateTask', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+            id: allTasks[indexEdit].id,
+            text: valueInput,
+        })
+    });
+    let result = await resp.json();
+    allTasks = result.data;
     localStorage.setItem('tasks', JSON.stringify(allTasks));
+    indexEdit = null;
     render();
 }
 
-editValue = (event) => {
+editValue = async (event) => { 
     valueInput = event.target.value;
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
 }
- 
