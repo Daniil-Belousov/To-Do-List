@@ -54,6 +54,13 @@ render = () => {
         inputR.addEventListener('change', editValue);
         inputR.value = valueInput;
         container.appendChild(inputR);
+
+        inputR.onblur = () => {
+            allTasks[indexEdit].text = valueInput;
+            indexEdit = null;
+            localStorage.setItem('tasks', JSON.stringify(allTasks));
+            render();
+        }
      } else {
         const text = document.createElement('p');
         text.innerText = item.text;
@@ -111,6 +118,7 @@ onEditText = (index) => {
     valueInput = allTasks[index].text;
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
+    inputR.focus();
 }
 
 onDoneText = (index) => {
@@ -125,3 +133,4 @@ editValue = (event) => {
     localStorage.setItem('tasks', JSON.stringify(allTasks));
     render();
 }
+ 
